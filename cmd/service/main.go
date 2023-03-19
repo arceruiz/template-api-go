@@ -1,20 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"github.com/rs/zerolog/log"
+
+	"github.com/arceruiz/template-api-go/internal/channels/rest"
+	"github.com/arceruiz/template-api-go/internal/config"
 )
 
-func homePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Homepage Endpoint Hit")
-}
-
-func handleRequests() {
-	http.HandleFunc("/", homePage)
-	//log.Fatal(http.ListenAndServe(":8081", nil))
-}
-
 func main() {
-	handleRequests()
-	//log.Panic().Err(rest.New().Start())
+	config.ParseFromFlags()
+	log.Panic().Err(rest.New().Start())
 }

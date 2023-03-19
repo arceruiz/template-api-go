@@ -1,0 +1,85 @@
+apiVersion: v1
+data:
+  config.yaml: |-
+    server:
+      http_port: "8080"
+kind: ConfigMap
+metadata:
+  name: template-api-go
+  namespace: services
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: template-api-go
+  namespace: services
+  labels:
+    app: template-api-go
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: template-api-go
+  template:
+    metadata:
+      labels:
+        app: template-api-go
+        name: template-api-go
+    spec:
+      imagePullSecrets:
+      - name: ghcr-cred
+      containers:
+      - name: template-api-go
+        image: arceruiz/template-api-go:a97e12d
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 8080
+            name: tcp
+            protocol: TCP
+        volumeMounts:
+        - mountPath: /app/configs/config.yaml
+          name: template-api-go
+          subPath: config.yaml
+      volumes:
+      - name: template-api-go
+        configMap:
+          name: template-api-go
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: template-api-go
+  namespace: services
+spec:
+  selector:
+    app: template-api-go
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: template-api-go-tcp
+      protocol: TCP
+    - port: 8081
+      targetPort: 8081
+      name: template-api-go-grpc-tcp
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: template-api-go #alterar para services caso conflite com outros serviços
+  namespace: services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+   - host: services.home
+     http:
+      paths:
+        - path: /api/template-api-go(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: template-api-go
+              port:
+                number: 8080
